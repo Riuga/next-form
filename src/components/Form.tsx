@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { ChangeEventHandler, FormEventHandler, useState } from 'react'
 
 export default function TaskForm() {
   const [formData, setFormData] = useState({
@@ -11,27 +11,23 @@ export default function TaskForm() {
     budgetTo: '',
     deadline: '',
     reminds: '',
-    all_auto_responses: false,
     qty_freelancers: '',
   })
 
-  const handleChange = (e) => {
-    const { name, type, value, checked } = e.target
+  const [all_auto_responses, setResponses] = useState(false)
+
+  const handleChange: ChangeEventHandler<
+    HTMLInputElement | HTMLTextAreaElement
+  > = (e) => {
+    const { name, value } = e.target
     setFormData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : value, // Handle checkbox value
+      [name]: value,
     }))
   }
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const handleSubmit: FormEventHandler = async (e) => {
     e.preventDefault()
-
-    const rules = {
-      budget_from: parseInt(formData.budgetFrom),
-      budget_to: parseInt(formData.budgetTo),
-      deadline_days: parseInt(formData.deadline),
-      qty_freelancers: parseInt(formData.qty_freelancers),
-    }
 
     const response = await fetch(
       `https://deadlinetaskbot.productlove.ru/api/v1/tasks/client/newhardtask?token=${
@@ -42,9 +38,7 @@ export default function TaskForm() {
         formData.budgetFrom
       }&budget_to=${formData.budgetTo}&deadline=${formData.deadline}&reminds=${
         formData.reminds
-      }&all_auto_responses=${
-        formData.all_auto_responses
-      }&rules=${JSON.stringify(rules)}`
+      }&all_auto_responses=${all_auto_responses}`
     )
 
     if (response.ok) {
@@ -58,7 +52,6 @@ export default function TaskForm() {
         budgetTo: '',
         deadline: '',
         reminds: '',
-        all_auto_responses: false,
         qty_freelancers: '',
       })
     } else {
@@ -168,8 +161,10 @@ export default function TaskForm() {
           <input
             type='checkbox'
             name='all_auto_responses'
-            checked={formData.all_auto_responses}
-            onChange={handleChange}
+            checked={all_auto_responses}
+            onChange={() => {
+              setResponses((prev) => !prev)
+            }}
             className='mr-2'
           />
           Включить автоматические ответы
